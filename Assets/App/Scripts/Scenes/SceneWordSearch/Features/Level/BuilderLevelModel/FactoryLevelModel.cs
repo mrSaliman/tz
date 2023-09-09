@@ -22,6 +22,7 @@ namespace App.Scripts.Scenes.SceneWordSearch.Features.Level.BuilderLevelModel
         private List<char> BuildListChars(List<string> words)
         {
             List<char> result = new();
+            // два словаря для подсчёта максимального количества необходимых символов: temp - для одного слова, max - для всех
             Dictionary<char, int> maxCharNumber = new(), tempCharNumber;
             foreach (var word in words)
             {

@@ -9,25 +9,28 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
 {
     public class ProviderFillwordLevel : IProviderFillwordLevel
     {
-        private static readonly TextAsset file1 = Resources.Load("Fillwords/pack_0") as TextAsset;
-        private static readonly TextAsset file2 = Resources.Load("Fillwords/words_list") as TextAsset;
+        private const string PackPath = "Fillwords/pack_0";
+        private const string WordsPath = "Fillwords/words_list";
 
-        private static readonly string[] input = file1.text.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-        private static readonly string[] words = file2.text.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+        private static readonly TextAsset file1 = Resources.Load(PackPath) as TextAsset;
+        private static readonly TextAsset file2 = Resources.Load(WordsPath) as TextAsset;
+
+        private static readonly string[] input = file1.text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+        private static readonly string[] words = file2.text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
         public GridFillWords LoadModel(int index)
         {
             char[][] level;
             do
             {
-                Debug.Log("Loading level " + index);
+                Debug.Log($"Loading level {index}");
                 level = GetLevel(index);
                 index++;
             }
             while (index <= input.Length && level == null);
             if (level == null)
             {
-                throw new();
+                throw new Exception("No valid level found");
             }
 
             var model = new GridFillWords(new(level.Length, level.Length));
@@ -42,9 +45,10 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
             index--;
             var level = input[index].Split(' ');
 
-            var charNumber = 0;
+            var charCount = 0;
             var maxCharNumber = 0;
-            List<List<int>> idxLevel = new();
+            var idxLevel = new List<List<int>>();
+
             for (int i = 0; i + 1 < level.Length; i += 2)
             {
                 List<int> word = new();
@@ -56,7 +60,7 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
                     var chars = level[i + 1].Split(';');
                     if (chars.Length == words[word[0]].Length)
                     {
-                        charNumber += chars.Length;
+                        charCount += chars.Length;
                         foreach (string c in chars)
                         {
                             result = int.Parse(c);
@@ -78,14 +82,16 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
                 idxLevel.Add(word);
             }
 
-            var mapSize = (int)Math.Floor(Math.Sqrt(charNumber));
-            if (mapSize * mapSize != charNumber)
+            var mapSize = (int)Math.Floor(Math.Sqrt(charCount));
+            // проверка на соответствие количества символов к квадратной сетке карты
+            if (mapSize * mapSize != charCount)
             {
                 Debug.Log("Uneven field.");
                 return null;
             }
 
-            if (maxCharNumber + 1 > charNumber)
+            // проверка максимального номера из ввода
+            if (maxCharNumber + 1 > charCount)
             {
                 Debug.Log("Incorrect Input.");
                 return null;    
@@ -94,15 +100,16 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
             char[][] finalLevel = new char[mapSize][];
             for (int i = 0; i < mapSize; i++) finalLevel[i] = new char[mapSize];
 
-            for (int i = 0; i < idxLevel.Count; i++)
+            // заполнение результирующего массива и проверки: на заполнение каждой клетки и на возможность выполнения уровня
+            foreach (var word in idxLevel)
             {
-                finalLevel[idxLevel[i][1] / mapSize][idxLevel[i][1] % mapSize] = words[idxLevel[i][0]][0];
-                for (int j = 2; j < idxLevel[i].Count; j++)
+                finalLevel[word[1] / mapSize][word[1] % mapSize] = words[word[0]][0];
+                for (int j = 2; j < word.Count; j++)
                 {
-                    var dist = Math.Abs(idxLevel[i][j] - idxLevel[i][j - 1]);
-                    if ((dist == 1 || dist == mapSize) && finalLevel[idxLevel[i][j] / mapSize][idxLevel[i][j] % mapSize] == '\0')
+                    var dist = Math.Abs(word[j] - word[j - 1]);
+                    if ((dist == 1 || dist == mapSize) && finalLevel[word[j] / mapSize][word[j] % mapSize] == '\0')
                     {
-                        finalLevel[idxLevel[i][j] / mapSize][idxLevel[i][j] % mapSize] = words[idxLevel[i][0]][j - 1];
+                        finalLevel[word[j] / mapSize][word[j] % mapSize] = words[word[0]][j - 1];
                     }
                     else
                     {

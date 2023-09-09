@@ -13,8 +13,10 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
             var mapSize = grid.Size;
             var chessUnit = grid.Get(from);
 
+            // движения представлены в виде вектора (x, y, z), где x и y - координаты, а z - количество возможных ходов в данном направлении
             List<Vector3Int> chessUnitMoves = GetChessUnitMoves(unit, chessUnit.PieceModel.Color);
 
+            // далее идёт поиск в ширину
             Queue<Vector2Int> queue = new();
             queue.Enqueue(from);
 
@@ -36,7 +38,7 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
                 {
                     var newCost = cost[current] + 1;
                     var p = 1;
-                    Vector2Int next = new(current.x + move.x * p, current.y + move.y * p);
+                    var next = current + ((Vector2Int)move) * p;
                     while (p <= move.z && Suits(next, mapSize, grid))
                     {
                         if (!cost.ContainsKey(next) || newCost < cost[next])
@@ -46,7 +48,7 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
                             cameFrom[next] = current;
                         }
                         p++;
-                        next = new(current.x + move.x * p, current.y + move.y * p);
+                        next = current + ((Vector2Int)move) * p;
                     }
                 }
             }
@@ -56,12 +58,9 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
                 return null;
             }
 
-            var path = new List<Vector2Int>
-            {
-                to
-            };
-            var cell = cameFrom[to];
-            while (!cameFrom[cell].Equals(cell))
+            var path = new List<Vector2Int>();
+            var cell = to;
+            while (!cell.Equals(from))
             {
                 path.Add(cell);
                 cell = cameFrom[cell];
@@ -77,8 +76,7 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
             switch (unit)
             {
                 case ChessUnitType.Pon:
-                    if (color == ChessUnitColor.White) chessUnitMoves.Add(new(0, 1, 1));
-                    else chessUnitMoves.Add(new(0, -1, 1));
+                    chessUnitMoves.Add(new(0, color == ChessUnitColor.White ? 1 : -1, 1));
                     break;
                 case ChessUnitType.King:
                     for (int i = -1; i < 2; i++)
@@ -116,6 +114,7 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
             return chessUnitMoves;
         }
 
+        //проверка на пустоту клетки и на выход за границу
         static private bool Suits(Vector2Int next, Vector2Int size, ChessGrid grid)
         {
             if (next.x >= 0 && next.y >= 0 && next.x < size.x && next.y < size.y)

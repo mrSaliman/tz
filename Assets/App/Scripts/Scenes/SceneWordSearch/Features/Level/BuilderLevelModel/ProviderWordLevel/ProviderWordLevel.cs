@@ -11,14 +11,9 @@ namespace App.Scripts.Scenes.SceneWordSearch.Features.Level.BuilderLevelModel.Pr
     {
         public LevelInfo LoadLevelData(int levelIndex)
         {
-            TextAsset file = Resources.Load("WordSearch/Levels/" + levelIndex) as TextAsset;
-            string jsonData = file.ToString();
-            Rootobject words = Rootobject.CreateFromJSON(jsonData);
-            LevelInfo level = new()
-            {
-                words = words.words.ToList<string>()
-            };
-            return level;
+            var file = Resources.Load($"WordSearch/Levels/{levelIndex}") as TextAsset;
+            var words = Rootobject.CreateFromJSON(file.ToString()).words;
+            return new LevelInfo { words = words.ToList() };
         }
     }
 }
